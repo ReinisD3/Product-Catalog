@@ -1,0 +1,45 @@
+
+
+{% block content %}
+
+    {% include "Products/index.twig" %}
+    <br>
+
+    <div class="container">
+        <h2>All Products Stored</h2>
+
+        <table class="table">
+            <thead>
+            <tr>
+                <th scope="col">Name</th>
+                <th scope="col">Category</th>
+                <th scope="col">Amount</th>
+                <th scope="col">Stored time</th>
+                <th scope="col">Edited time</th>
+                <th scope="col"></th>
+            </tr>
+            </thead>
+
+            <tbody>
+            {% for product in productCollection.getProducts  %}
+            <tr>
+                <td>{{ product.getName }}</td>
+                <td>{{ product.getCategory }}</td>
+                <td>{{ product.getAmount }}</td>
+                <td>{{ product.getAddedAt }}</td>
+                <td>{{ product.getLastEditedAt }}</td>
+                <td><a class='btn btn-dark '  href='/products/edit/{{ product.id }}' role='button'>Edit </a>
+                    <a class='btn btn-danger '  href='/products/delete/{{ product.id }}' role='button'>Delete</a></td>
+
+            </tr>
+
+            {% endfor %}
+            </tbody>
+        </table>
+
+    </div>
+
+
+
+
+{% endblock %}

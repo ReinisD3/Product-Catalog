@@ -1,0 +1,31 @@
+
+{% block content %}
+
+    {% include "Products/index.twig" %}
+    <br>
+
+    <div class="container">
+        <h2>Add Product</h2>
+        <form method="post" action="/products/add" >
+            <label for="category">Product Category : </label><br>
+            <select id="category" name="category">
+                <option value="fruit">Fruit</option>
+                <option value="vegetable">Vegetable</option>
+                <option value="meat">Meat product</option>
+                <option value="bread">Bakery product</option>
+            </select><br>
+            <label for="title" class="form-label">Product name : {{ session.errors.get('productName')}} </label>
+            <input type="text" class="form-control" name="name" id="title"
+                   placeholder="{{ session.errors.get('taskTitle') }}"/>
+            <label for="title" class="form-label">Product amount to add : </label>
+            <input type="text" class="form-control" name="amount" id="title"
+                   placeholder="{{ session.errors.get('taskTitle') }}"/>
+            <input type="submit" value="Add Product" name="submit" class="btn btn-dark"/>
+        </form>
+    </div>
+
+
+{% endblock %}
+
+
+

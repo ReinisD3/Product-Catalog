@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+          integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <div class="container">
+        <div class="float-right">
+            {% if session.id != null %}
+
+                <h5 class="text-success">{{ userName }}</h5>
+
+                <a class='btn btn-dark float-right' href='/users/logout' role='button'>Logout</a>
+            {% else %}
+
+                <h5 class="text-danger">not logged in</h5>
+
+                <a class='btn btn-dark float-right' href='/users/index' role='button'>Login</a>
+            {% endif %}
+        </div>
+
+        <nav class="nav">
+            <a class="nav-link active" href="/">Home</a>
+            <a class="nav-link active" href="/products">Product Catalog</a>
+
+
+        </nav>
+    </div>
+
+    <title>{% block title %}{% endblock %}</title>
+
+</head>
+<body>
+<div id="content">{% block content %}{% endblock %} </div>
+<div id="footer">
+
+    <div class="container fixed-bottom">
+        <footer>
+            <p class="float-right">Made by : Reinis <br>
+                Version 1.0.0</p>
+        </footer>
+    </div>
+</div>
+<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"
+        integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN"
+        crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"
+        integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"
+        crossorigin="anonymous"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"
+        integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
+        crossorigin="anonymous"></script>
+
+
+</body>
+</html>

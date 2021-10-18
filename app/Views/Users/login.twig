@@ -1,0 +1,21 @@
+
+{% extends "base.twig" %}
+
+{% block title %}Home{% endblock %}
+
+
+{% block content %}
+    <div class="container">
+<form action="/users/login">
+    <label for="email" class="form-label"><i class="fas fa-user"></i></label>
+    <input type="text" class="form-control" name="email" id="email" placeholder="email">
+    <label for="password" class="form-label"><i class="fas fa-lock"></i></label>
+    <input type="password" class="form-control" name="password" id="password" placeholder="password">
+    <input type="submit" value="Login" name="submit" class="btn btn-success"/>
+</form>
+<form action="register" class="float-right">
+    <input type="submit" value="New Account" name="submit" class="btn btn-success"/>
+</form>
+
+</div>
+{% endblock %}

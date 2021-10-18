@@ -1,0 +1,27 @@
+{% extends "base.twig" %}
+
+{% block title %}Product Catalog{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <h2>Edit Product</h2>
+        <form method="post" action="/products/edit/{{ product.id }}" >
+            <label for="category">Product Category : </label><br>
+            <select id="category" name="category" >
+                <option value="fruit" >Fruit</option>
+                <option value="vegetable">Vegetable</option>
+                <option value="meat">Meat product</option>
+                <option value="bread">Bakery product</option>
+            </select><br>
+            <label for="title" class="form-label">Product name : </label>
+            <input type="text" class="form-control" name="name" id="title"
+                   placeholder="{{ product.getName }}"/>
+            <label for="title" class="form-label">Product amount : </label>
+            <input type="text" class="form-control" name="amount" id="title"
+                   placeholder="{{ product.getAmount }}"/>
+            <input type="submit" value="Save changes" name="submit" class="btn btn-dark"/>
+        </form>
+    </div>
+
+
+{% endblock %}

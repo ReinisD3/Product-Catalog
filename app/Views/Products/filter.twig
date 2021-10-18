@@ -1,0 +1,53 @@
+
+
+{% block content %}
+
+    {% include "Products/index.twig" %}
+    <br>
+    <div class="container">
+        <h2>Filter by Category</h2>
+        <form action="/products/filter/get">
+            <label for="category">Product Category : </label><br>
+            <select id="category" name="category">
+                <option value="fruit">Fruit</option>
+                <option value="vegetable">Vegetable</option>
+                <option value="meat">Meat product</option>
+                <option value="bread">Bakery product</option>
+            </select>
+            <input type="submit" value="Filter" name="submit" class="btn btn-dark"/>
+        </form>
+    </div>
+    {% if productCollection is defined %}
+        <div class="container">
+            <table class="table">
+                <thead>
+                <tr>
+                    <th scope="col">Name</th>
+                    <th scope="col">Category</th>
+                    <th scope="col">Amount</th>
+                    <th scope="col">Stored time</th>
+                    <th scope="col">Edited time</th>
+                    <th scope="col"></th>
+                </tr>
+                </thead>
+
+                <tbody>
+                {% for product in productCollection.getProducts %}
+                    <tr>
+                        <td>{{ product.getName }}</td>
+                        <td>{{ product.getCategory }}</td>
+                        <td>{{ product.getAmount }}</td>
+                        <td>{{ product.getAddedAt }}</td>
+                        <td>{{ product.getLastEditedAt }}</td>
+                        <td><a class='btn btn-danger ' href='/products/edit/{{ product.id }}' role='button'>Edit
+                                Product</a>
+                        </td>
+                    </tr>
+
+
+                {% endfor %}
+        </div>
+    {% endif %}
+
+
+{% endblock %}

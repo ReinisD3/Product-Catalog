@@ -1,0 +1,21 @@
+{% extends "base.twig" %}
+
+{% block title %}Home{% endblock %}
+
+
+{% block content %}
+    <div class="container">
+        <form method="post" action="/users/register">
+            <label for="name" class="form-label"> Name : {{ session.errors.get('registerName') }} </label>
+            <input type="text" class="form-control" name="name" id="name"
+                   placeholder=""/>
+            <label for="email" class="form-label"> E-mail : {{ session.errors.get('registerEmail') }}</label>
+            <input type="text" class="form-control" name="email" id="email"
+                   placeholder=""/>
+            <label for="password" class="form-label"> Password : {{ session.errors.get('registerPassword') }}</label>
+            <input type="password" class="form-control" name="password" id="password"
+                   placeholder=""/>
+            <input type="submit" value="Register" name="submit" class="btn btn-dark"/>
+        </form>
+    </div>
+{% endblock %}
