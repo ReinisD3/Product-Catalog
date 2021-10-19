@@ -142,22 +142,30 @@ class ProductsController
 
     public function filter(): View
     {
-        if ($_GET['categoryId'] == 'all') $_GET['categoryId'] = null;
-        $categoryProductsCollection = $this->repository->getAll(null, $_GET['categoryId'] ?? null);
+        try {
+            if ($_GET['categoryId'] == 'all') $_GET['categoryId'] = null;
+            $categoryProductsCollection = $this->repository->getAll(null, $_GET['categoryId'] ?? null);
 
-        if (!empty($_GET['tags'])) {
-            $filterTagsCollection = new TagsCollection();
-            foreach ($_GET['tags'] as $tagId) {
-                $filterTagsCollection->add($this->definedTags->getTagById($tagId));
+            if (!empty($_GET['tags'])) {
+                $filterTagsCollection = new TagsCollection();
+                foreach ($_GET['tags'] as $tagId) {
+                    $filterTagsCollection->add($this->definedTags->getTagById($tagId));
+                }
+                $categoryProductsCollection->filterByTags($filterTagsCollection);
             }
-            $categoryProductsCollection->filterByTags($filterTagsCollection);
-        }
 
-        return new View('Products/show.twig',
-            ['productCollection' => $categoryProductsCollection,
-                'categories' => $this->repository->getCategories(),
-                'tags' => $this->definedTags,
-                'userName' => Auth::user($_SESSION['id'])]);
+            return new View('Products/show.twig',
+                ['productCollection' => $categoryProductsCollection,
+                    'categories' => $this->repository->getCategories(),
+                    'tags' => $this->definedTags,
+                    'userName' => Auth::user($_SESSION['id'])]);
+        }catch(RepositoryValidationException $e)
+        {
+            $_SESSION['errors'] = $this->validator->getErrors();
+            return  new View('Products/filter.twig',
+            ['categories' => $this->repository->getCategories(),
+                'tags' => $this->definedTags,]);
+        }
     }
 
     public function delete(array $id): Redirect
