@@ -2,17 +2,21 @@
 
 namespace app;
 
+use App\Auth;
+
 class View
 {
     private string $fileName;
-    private $data;
-    private ?string $dataName;
+    private ?array $data;
 
-    public function __construct(string $fileName, $data = null, string $dataName = null)
+    public function __construct(string $fileName, ?array $data = null)
     {
         $this->fileName = $fileName;
-        $this->data = $data;
-        $this->dataName = $dataName;
+        $this->data['userName'] = Auth::user($_SESSION['id']);
+        foreach ($data as $key => $datum) {
+            $this->data[$key] = $datum;
+        }
+
     }
 
     public function getFileName(): string
@@ -20,13 +24,9 @@ class View
         return $this->fileName;
     }
 
-    public function getData()
+    public function getData(): ?array
     {
-        return $this->data;
+        return $this->data ?? null;
     }
 
-    public function getDataName(): ?string
-    {
-        return $this->dataName;
-    }
 }

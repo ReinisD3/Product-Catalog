@@ -7,13 +7,13 @@
     <div class="container">
         <h2>Filter by Category</h2>
         <form action="/products/filter/get">
-            <label for="category">Product Category : </label><br>
-            <select id="category" name="category">
-                <option value="fruit">Fruit</option>
-                <option value="vegetable">Vegetable</option>
-                <option value="meat">Meat product</option>
-                <option value="bread">Bakery product</option>
-            </select>
+            <label for="categoryId">Product Category : </label><br>
+            <select id="categoryId" name="categoryId">
+
+                {% for category in categories %}
+                    <option value="{{ category.categoryId }}">{{ category.name }}</option>
+                {% endfor %}
+            </select><br>
             <input type="submit" value="Filter" name="submit" class="btn btn-dark"/>
         </form>
     </div>

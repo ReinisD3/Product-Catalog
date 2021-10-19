@@ -81,10 +81,9 @@ class Router
                 $process = $controller->$method($vars);
 
                 if ($process instanceof View) {
-                    echo $this->twig->render($process->getFileName(), [
-                        'userName' => Auth::user($_SESSION['id']),
-                        $process->getDataName() => $process->getData()
-                    ]);
+                    echo $this->twig->render($process->getFileName(),
+                        $process->getData()
+                    );
                 }
                 if ($process instanceof Redirect) {
                     header("Location:{$process->getLocation()}");

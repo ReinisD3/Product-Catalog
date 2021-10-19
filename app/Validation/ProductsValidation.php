@@ -8,7 +8,6 @@ use App\Exceptions\FormValidationException;
 class ProductsValidation
 {
     private Errors $errors;
-    private array $categories = ['fruit','vegetable','meat','bread'];
 
     public function __construct()
     {
@@ -23,10 +22,7 @@ class ProductsValidation
         if ($_POST['name'] == '') {
             $this->errors->add('productName','Invalid name');
         }
-        if (! in_array($_POST['category'],$this->categories)) {
-            $this->errors->add('productCategory','No such category defined');
-        }
-        if (! is_numeric($_POST['amount'])) {
+        if (!is_numeric($_POST['amount'])) {
             $this->errors->add('productAmount','Need to be numeric value');
         }
 

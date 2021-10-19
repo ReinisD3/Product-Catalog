@@ -2,11 +2,16 @@
 
 namespace app\Controllers;
 
+use App\Auth;
 use App\Exceptions\FormValidationException;
+use app\Exceptions\RepositoryValidationException;
 use App\Models\Collections\ProductsCollection;
+use app\Models\Collections\TagsCollection;
 use App\Models\Product;
 use App\Redirect;
+use App\Repositories\MysqlCategoriesRepository;
 use App\Repositories\MysqlProductsRepository;
+use App\Repositories\MysqlTagsRepository;
 use App\Repositories\ProductsRepositoryInterface;
 use App\Validation\ProductsValidation;
 use App\View;
@@ -17,12 +22,16 @@ class ProductsController
 {
     private ProductsRepositoryInterface $repository;
     private ProductsValidation $validator;
+    private TagsCollection $definedTags;
+    private array $categories;
 
 
     public function __construct()
     {
         $this->repository = new MysqlProductsRepository();
         $this->validator = new ProductsValidation();
+        $this->definedTags = $this->repository->definedTagsCollection();
+        $this->categories = $this->repository->getCategories();
 
     }
 
@@ -34,51 +43,78 @@ class ProductsController
     public function show(): View
     {
         $productCollection = $this->repository->getAll();
-        return new View('Products/show.twig', $productCollection, 'productCollection');
+
+        return new View('Products/show.twig',
+            ['productCollection' => $productCollection,
+                'categories' => $this->categories,
+                'tags' => $this->definedTags,
+                'userName' => Auth::user($_SESSION['id'])]);
     }
 
     public function addTemplate(): View
     {
-        return new View('Products/add.twig');
+
+        return new View('Products/add.twig',
+            ['categories' => $this->categories,
+                'userName' => Auth::user($_SESSION['id']),
+                'tags' => $this->definedTags,
+                'errors' => $_SESSION['errors']]);
     }
 
-    public function add(): Redirect
+    public function add(): object
     {
-        try{
+        try {
             $this->validator->validateAdd($_POST);
+            $tagsCollection = new TagsCollection();
+            foreach ($_POST['tags'] as $tagId) {
+                $tagsCollection->add($this->definedTags->getTagById($tagId));
+            }
             $product = new Product(
                 $_POST['name'],
-                $_POST['category'],
-                $_POST['amount']
+                $_POST['categoryId'],
+                $_POST['amount'],
+                $_SESSION['id'] ?? null,
+                $tagsCollection
             );
             $this->repository->save($product);
             return new Redirect('/products/show');
-        }
-        catch (FormValidationException $e)
-        {
+        } catch (FormValidationException|RepositoryValidationException $e) {
+
             $_SESSION['errors'] = $this->validator->getErrors();
-            return new Redirect('/products/add');
+
+            return new View('Products/add.twig',
+                ['categories' => $this->categories,
+                    'userName' => Auth::user($_SESSION['id']),
+                    'tags' => $this->definedTags,
+                    'errors' => $_SESSION['errors']]);
         }
-
-
 
     }
 
     public function editTemplate(array $product): View
     {
-        $editProduct = $this->repository->getAll($product['id'])->getProducts()[0];
+        $editProducts = $this->repository->getAll($product['id'])->getProducts();
 
-        return new View('Products/edit.twig', $editProduct, 'product');
+        return new View('Products/edit.twig',
+            ['products' => $editProducts,
+                'categories' => $this->repository->getCategories(),
+                'tags' => $this->definedTags]);
     }
+
 
     public function edit(array $product): Redirect
     {
         /** @var Product $product */
         $product = $this->repository->getAll($product['id'])->getProducts()[0];
+        $tags = new TagsCollection();
+        foreach ($_POST['tags'] as $tagId) {
+            $tags->add($this->definedTags->getTagById($tagId));
+        }
         $product->setName($_POST['name']);
-        $product->setCategory($_POST['category']);
-        $product->setAmount($_POST['amount']);
+        $product->setCategoryId((int)$_POST['categoryId']);
+        $product->setAmount((int)$_POST['amount']);
         $product->setLastEditedAt();
+        $product->setTagsCollection($tags);
         $this->repository->save($product);
 
         return new Redirect('/products/show');
@@ -86,13 +122,23 @@ class ProductsController
 
     public function filterTemplate(): View
     {
-        return new View('Products/filter.twig');
+        return new View('Products/filter.twig', ['categories' => $this->repository->getCategories()]);
     }
 
     public function filter(): View
     {
-        $categoryProductsCollection = $this->repository->getAll(null, $_GET['category']);
-        return new View('Products/filter.twig', $categoryProductsCollection, 'productCollection');
+        if ($_GET['categoryId'] == '') $_GET['categoryId'] = null;
+        $categoryProductsCollection = $this->repository->getAll(null, $_GET['categoryId'] ?? null);
+        $filterTagsCollection = new TagsCollection();
+        foreach ($_GET['tags'] as $tagId) {
+            $filterTagsCollection->add($this->definedTags->getTagById($tagId));
+        }
+        $categoryProductsCollection->filterByTags($filterTagsCollection);
+
+        return new View('Products/show.twig',
+            ['productCollection' => $categoryProductsCollection,
+                'categories' => $this->repository->getCategories(),
+                'userName' => Auth::user($_SESSION['id'])]);
     }
 
     public function delete(array $id): Redirect

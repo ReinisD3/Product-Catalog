@@ -7,19 +7,27 @@
     <div class="container">
         <h2>Add Product</h2>
         <form method="post" action="/products/add" >
-            <label for="category">Product Category : </label><br>
-            <select id="category" name="category">
-                <option value="fruit">Fruit</option>
-                <option value="vegetable">Vegetable</option>
-                <option value="meat">Meat product</option>
-                <option value="bread">Bakery product</option>
+            <label for="categoryId">Product Category : </label><br>
+            <select id="categoryId" name="categoryId">
+                {% for category in categories %}
+                <option value="{{ category.categoryId }}">{{ category.name }}</option>
+                {% endfor %}
             </select><br>
-            <label for="title" class="form-label">Product name : {{ session.errors.get('productName')}} </label>
-            <input type="text" class="form-control" name="name" id="title"
-                   placeholder="{{ session.errors.get('taskTitle') }}"/>
+            <label for="title" class="form-label">Product name : </label>
+            <input type="text" class="form-control" name="name" id="title"/>
+            <p class="text-danger">{{ errors.get('productName') }}</p>
             <label for="title" class="form-label">Product amount to add : </label>
-            <input type="text" class="form-control" name="amount" id="title"
-                   placeholder="{{ session.errors.get('taskTitle') }}"/>
+            <input type="text" class="form-control" name="amount" id="title" />
+            <p class="text-danger">{{ errors.get('productAmount') }}</p>
+            <fieldset>
+                <h6>Add Tags</h6>
+                <div>
+                    {% for tag in tags.getTags %}
+                    <input type="checkbox" id="{{ tag.getTagId }}" name="tags[{{ tag.getTagId }}]" value="{{ tag.getTagId }}">
+                    <label for="{{ tag.getTagId }}">{{ tag.getName }}</label>
+                    {% endfor %}
+                </div>
+            </fieldset>
             <input type="submit" value="Add Product" name="submit" class="btn btn-dark"/>
         </form>
     </div>

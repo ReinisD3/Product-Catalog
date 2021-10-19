@@ -2,30 +2,41 @@
 
 namespace app\Models;
 
+use app\Models\Collections\TagsCollection;
 use Carbon\Carbon;
+use Ramsey\Uuid\Uuid;
 
 class Product
 {
     private string $name;
-    private string $category;
+    private int $categoryId;
     private int $amount;
     private ?string $addedAt;
     private ?string $lastEditedAt;
-    private ?int $id;
+    private ?string $id;
+    private ?string $category;
+    private ?TagsCollection $tagsCollection;
+    private string $user;
 
-    public function __construct(string $name,
-                                string $category,
-                                int $amount,
-                                ?string $lastEditedAt = null,
-                                ?string $addedAt = null,
-                                ?int $id = null )
+    public function __construct(string          $name,
+                                int             $categoryId,
+                                int             $amount,
+                                ?string         $user = null,
+                                ?TagsCollection $tagsCollection = null,
+                                ?string         $lastEditedAt = null,
+                                ?string         $addedAt = null,
+                                ?string         $id = null,
+                                ?string         $category = null)
     {
         $this->name = $name;
-        $this->category = $category;
+        $this->categoryId = $categoryId;
         $this->amount = $amount;
         $this->addedAt = $addedAt ?? Carbon::now();
         $this->lastEditedAt = $lastEditedAt;
-        $this->id = $id;
+        $this->id = $id ?? Uuid::uuid4();
+        $this->category = $category;
+        $this->tagsCollection = $tagsCollection;
+        $this->user = $user ?? 'public';
     }
 
     public function getName(): string
@@ -33,9 +44,9 @@ class Product
         return $this->name;
     }
 
-    public function getCategory(): string
+    public function getCategoryId(): int
     {
-        return $this->category;
+        return $this->categoryId;
     }
 
     public function getAmount(): int
@@ -53,7 +64,7 @@ class Product
         return $this->lastEditedAt;
     }
 
-    public function getId(): ?int
+    public function getId(): ?string
     {
         return $this->id;
     }
@@ -63,17 +74,39 @@ class Product
         $this->name = $name;
     }
 
-    public function setCategory(string $category): void
+    public function setCategoryId(int $categoryId): void
     {
-        $this->category = $category;
+        $this->categoryId = $categoryId;
     }
 
     public function setAmount(int $amount): void
     {
         $this->amount = $amount;
     }
+
     public function setLastEditedAt(): void
     {
         $this->lastEditedAt = Carbon::now();
     }
+
+    public function getCategory(): ?string
+    {
+        return $this->category;
+    }
+
+    public function getTagsCollection(): ?TagsCollection
+    {
+        return $this->tagsCollection;
+    }
+
+    public function setTagsCollection(?TagsCollection $tagsCollection): void
+    {
+        $this->tagsCollection = $tagsCollection;
+    }
+
+    public function getUser(): string
+    {
+        return $this->user;
+    }
+
 }

@@ -70,8 +70,7 @@ class UsersController
             ));
             echo "<script type='text/javascript'>alert('User registered');</script>";
             return new Redirect('/users/index');
-        }
-        catch (FormValidationException $e) {
+        } catch (FormValidationException $e) {
 
             $_SESSION['errors'] = $this->validator->getErrors();
             return new View('Users\register.twig');

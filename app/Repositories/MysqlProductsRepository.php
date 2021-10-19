@@ -2,16 +2,29 @@
 
 namespace app\Repositories;
 
+use App\Errors;
+use App\Exceptions\RepositoryValidationException;
 use App\Models\Collections\ProductsCollection;
+use App\Models\Collections\TagsCollection;
 use App\Models\Product;
 use PDO;
 use App\Repositories\ProductsRepositoryInterface;
+use App\Repositories\MysqlCategoriesRepository;
+use App\Repositories\MysqlTagsRepository;
+use App\Repositories\MysqlProducts_TagsRelationRepository;
 
 
 class MysqlProductsRepository implements ProductsRepositoryInterface
 {
     private array $config;
     private PDO $pdo;
+    private MysqlCategoriesRepository $categoriesRepository;
+    private MysqlTagsRepository $tagsRepository;
+    private MysqlProducts_TagsRelationRepository $products_TagsRelationRepository;
+    private array $categories;
+    private TagsCollection $definedTags;
+    private Errors $errors;
+
 
     public function __construct()
     {
@@ -24,32 +37,50 @@ class MysqlProductsRepository implements ProductsRepositoryInterface
             die($e->getMessage());
         }
 
+        $this->categoriesRepository = new MysqlCategoriesRepository($this->pdo);
+        $this->categories = $this->categoriesRepository->getAll();
+
+        $this->tagsRepository = new MysqlTagsRepository($this->pdo);
+        $this->products_TagsRelationRepository = new MysqlProducts_TagsRelationRepository($this->tagsRepository, $this->pdo);
+
+        $this->errors = new Errors();
+
     }
 
-    public function getAll(?int $id = null, ?string $category = null): ProductsCollection
+    public function getAll(?string $id = null, ?string $categoryId = null): ?ProductsCollection
     {
+        $filter = "WHERE user = '{$_SESSION['id']}' ";
         if ($id !== null) {
-            $sql = "SELECT * FROM products WHERE id='{$id}'";
-        } elseif ($category !== null) {
-            $sql = "SELECT * FROM products WHERE category='{$category}'";
-        } else {
-            $sql = "select * from products";
+            $filter .= "AND id='{$id}' ";
+        } elseif ($categoryId !== null) {
+            $filter .= "AND categoryId ='{$categoryId}' ";
         }
 
+        $sql = "SELECT * FROM products " . $filter;
 
         $statement = $this->pdo->prepare($sql);
         $statement->execute();
 
         $products = $statement->fetchAll(PDO::FETCH_CLASS);
+
+
         $productsCollection = new ProductsCollection();
+
+        if (empty($products)) {
+            return null;
+        }
+
         foreach ($products as $product) {
             $productsCollection->add(new Product(
                 $product->name,
-                $product->category,
+                $product->categoryId,
                 $product->amount,
+                $product->user,
+                $this->products_TagsRelationRepository->getProductTagsCollection($product->id),
                 $product->lastEditedAt,
                 $product->addedAt,
-                $product->id
+                $product->id,
+                $this->categoriesRepository->get($product->categoryId)
             ));
         }
         return $productsCollection;
@@ -58,30 +89,48 @@ class MysqlProductsRepository implements ProductsRepositoryInterface
     public function save(Product $product): void
     {
 
-        if ($product->getId() !== null) {
+        if (!isset($this->categories[$product->getCategoryId()])) {
+            throw new RepositoryValidationException();
+        }
+//        if (!isset)
+
+        if ($this->getAll($product->getId()) !== null) {
             $sql = "UPDATE products 
         SET name = '{$product->getName()}' ,
-            category = '{$product->getCategory()}',
+            categoryId = '{$product->getCategoryId()}',
             amount = '{$product->getAmount()}' ,
-          lastEditedAt = '{$product->getLastEditedAt()}'   
+          lastEditedAt = '{$product->getLastEditedAt()}'            
         WHERE id='{$product->getId()}'";
         } else {
-            $sql = "INSERT INTO products (name,category,amount,addedAt,lastEditedAt) 
+            $sql = "INSERT INTO products (name,categoryId,amount,addedAt,lastEditedAt,id,user) 
         VALUES  ('{$product->getName()}',
-                 '{$product->getCategory()}',
+                 '{$product->getCategoryId()}',
                  '{$product->getAmount()}',
                  '{$product->getAddedAt()}',
-                 '{$product->getLastEditedAt()}')";
+                 '{$product->getLastEditedAt()}',
+                 '{$product->getId()}',
+                 '{$product->getUser()}')";
         }
 
-
         $this->pdo->exec($sql);
+        $this->products_TagsRelationRepository->save($product);
     }
 
     public function delete(Product $product): void
     {
-        $sql = "DELETE FROM products WHERE id={$product->getId()}";
+
+        $sql = "DELETE FROM products WHERE id= '{$product->getId()}'";
 
         $this->pdo->exec($sql);
+    }
+
+    public function getCategories(): array
+    {
+        return $this->categories;
+    }
+
+    public function definedTagsCollection(): TagsCollection
+    {
+        return $this->products_TagsRelationRepository->getAllTags();
     }
 }
