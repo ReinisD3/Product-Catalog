@@ -35,7 +35,7 @@ class UsersController
 
     }
 
-    public function login(): Redirect
+    public function login(): object
     {
 
         $loggedUser = $this->repository->validateLogin(
@@ -45,12 +45,14 @@ class UsersController
         try {
             $this->validator->validateLogin($loggedUser);
             $_SESSION['id'] = $loggedUser->id();
+            return new Redirect('/products/show');
 
         } catch (RepositoryValidationException $e) {
 
             echo "<script type='text/javascript'>alert('User not found! Try Again or make new User account.');</script>";
+            return  new View('Users/login.twig',['errors'=>$_SESSION['errors']]);
         }
-        return new Redirect('/');
+
     }
 
 
@@ -59,7 +61,7 @@ class UsersController
         return new View('Users\register.twig');
     }
 
-    public function registerSave(): object
+    public function registerSave(): View
     {
         try {
             $this->validator->validateRegister($_POST);
@@ -73,7 +75,7 @@ class UsersController
         } catch (FormValidationException $e) {
 
             $_SESSION['errors'] = $this->validator->getErrors();
-            return new View('Users\register.twig');
+            return new View('Users\register.twig',['errors'=>$_SESSION['errors']]);
         }
 
     }

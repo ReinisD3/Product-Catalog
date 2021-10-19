@@ -9,7 +9,7 @@
             <form action="/products/filter/get">
                 <label for="categoryId">Filter by Category : </label><br>
                 <select id="categoryId" name="categoryId">
-                    <option value="{{ null }}">None</option>
+                    <option value="all">All</option>
                     {% for category in categories %}
                         <option value="{{ category.categoryId }}">{{ category.name }}</option>
                     {% endfor %}

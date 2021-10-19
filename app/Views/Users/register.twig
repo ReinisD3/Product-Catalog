@@ -6,15 +6,15 @@
 {% block content %}
     <div class="container">
         <form method="post" action="/users/register">
-            <label for="name" class="form-label"> Name : {{ session.errors.get('registerName') }} </label>
-            <input type="text" class="form-control" name="name" id="name"
-                   placeholder=""/>
-            <label for="email" class="form-label"> E-mail : {{ session.errors.get('registerEmail') }}</label>
-            <input type="text" class="form-control" name="email" id="email"
-                   placeholder=""/>
-            <label for="password" class="form-label"> Password : {{ session.errors.get('registerPassword') }}</label>
-            <input type="password" class="form-control" name="password" id="password"
-                   placeholder=""/>
+            <label for="name" class="form-label"> Name : </label>
+            <input type="text" class="form-control" name="name" id="name"/>
+            <p class="text-danger">{{ errors.get('registerName') }}</p>
+            <label for="email" class="form-label"> E-mail : </label>
+            <input type="text" class="form-control" name="email" id="email"/>
+            <p class="text-danger">{{ errors.get('registerEmail') }}</p>
+            <label for="password" class="form-label"> Password : </label>
+            <input type="password" class="form-control" name="password" id="password"/>
+            <p class="text-danger">{{ errors.get('registerPassword') }}</p>
             <input type="submit" value="Register" name="submit" class="btn btn-dark"/>
         </form>
     </div>

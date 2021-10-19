@@ -40,7 +40,7 @@ class UsersValidation
     public function validateRegister(array $data): void
     {
 
-        if ($data['name'] == '') $this->errors->add('registerName', 'Add name here');
+        if ($data['name'] == '') $this->errors->add('registerName', 'Add name');
 
         if (!v::stringType()->length(6, null)->validate($data['password']))
             $this->errors->add('registerPassword', 'Need at least 6 characters ');

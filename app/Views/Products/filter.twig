@@ -7,15 +7,23 @@
     <div class="container">
         <h2>Filter by Category</h2>
         <form action="/products/filter/get">
-            <label for="categoryId">Product Category : </label><br>
+            <label for="categoryId">Filter by Category : </label><br>
             <select id="categoryId" name="categoryId">
-
+                <option value="all">All</option>
                 {% for category in categories %}
                     <option value="{{ category.categoryId }}">{{ category.name }}</option>
                 {% endfor %}
-            </select><br>
+            </select>
+            <fieldset>
+                <h6>Filter by Tags</h6>
+                {% for tag in tags.getTags %}
+                    <input type="checkbox" id="{{ tag.getTagId }}" name="tags[{{ tag.getTagId }}]" value="{{ tag.getTagId }}">
+                    <label for="{{ tag.getTagId }}">{{ tag.getName }}</label>
+                {% endfor %}
+            </fieldset>
             <input type="submit" value="Filter" name="submit" class="btn btn-dark"/>
         </form>
+        <form action="/products/show"><input type="submit" value="Reset Filters" name="submit" class="btn btn-dark"/></form>
     </div>
     {% if productCollection is defined %}
         <div class="container">
