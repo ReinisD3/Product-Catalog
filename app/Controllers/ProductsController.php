@@ -104,24 +104,22 @@ class ProductsController
 
     public function edit(array $product): object
     {
-        try{
+        try {
 
             /** @var Product $product */
             $product = $this->repository->getAll($product['id'])->getProducts()[0];
-            $tags = new TagsCollection();
-            foreach ($_POST['tags'] as $tagId) {
-                $tags->add($this->definedTags->getTagById($tagId));
-            }
-            if($_POST['name'] !== '')$product->setName($_POST['name']);
+            $tags = array_map(fn($t) => $this->definedTags->getTagById($t), $_POST['tags']);
+            $tagsCollection = new TagsCollection($tags);
+
+            if ($_POST['name'] !== '') $product->setName($_POST['name']);
             $product->setCategoryId((int)$_POST['categoryId']);
-            if($_POST['amount'] !== '')$product->setAmount((int)$_POST['amount']);
+            if ($_POST['amount'] !== '') $product->setAmount((int)$_POST['amount']);
             $product->setLastEditedAt();
-            $product->setTagsCollection($tags);
+            $product->setTagsCollection($tagsCollection);
             $this->repository->save($product);
 
             return new Redirect('/products/show');
-        }catch(FormValidationException $e)
-        {
+        } catch (FormValidationException $e) {
             $_SESSION['errors'] = $this->validator->getErrors();
             return new View('Products/edit.twig',
                 ['product' => $product,

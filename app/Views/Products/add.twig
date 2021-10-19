@@ -12,6 +12,7 @@
                 {% for category in categories %}
                 <option value="{{ category.categoryId }}">{{ category.name }}</option>
                 {% endfor %}
+                <p class="text-danger">{{ errors.get('categoryError') }}</p>
             </select><br>
             <label for="title" class="form-label">Product name : </label>
             <input type="text" class="form-control" name="name" id="title"/>

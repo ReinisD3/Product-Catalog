@@ -49,10 +49,15 @@ class MysqlProductsRepository implements ProductsRepositoryInterface
 
     public function getAll(?string $id = null, ?string $categoryId = null): ?ProductsCollection
     {
+
         $filter = "WHERE user = '{$_SESSION['id']}' ";
         if ($id !== null) {
             $filter .= "AND id='{$id}' ";
         } elseif ($categoryId !== null) {
+            if (!isset($this->categories[$categoryId])) {
+                $this->errors->add('categoryError','No such category');
+                throw new RepositoryValidationException();
+            }
             $filter .= "AND categoryId ='{$categoryId}' ";
         }
 
@@ -90,9 +95,10 @@ class MysqlProductsRepository implements ProductsRepositoryInterface
     {
 
         if (!isset($this->categories[$product->getCategoryId()])) {
+            $this->errors->add('categoryError','No such category');
             throw new RepositoryValidationException();
         }
-//        if (!isset)
+
 
         if ($this->getAll($product->getId()) !== null) {
             $sql = "UPDATE products 
