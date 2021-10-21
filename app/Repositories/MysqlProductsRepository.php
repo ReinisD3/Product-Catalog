@@ -2,16 +2,14 @@
 
 namespace app\Repositories;
 
-use App\Errors;
-use App\Exceptions\RepositoryValidationException;
 use App\Models\Collections\ProductsCollection;
 use App\Models\Collections\TagsCollection;
 use App\Models\Product;
+use App\Models\Tag;
 use PDO;
 use App\Repositories\ProductsRepositoryInterface;
 use App\Repositories\MysqlCategoriesRepository;
 use App\Repositories\MysqlTagsRepository;
-use App\Repositories\MysqlProducts_TagsRelationRepository;
 
 
 class MysqlProductsRepository implements ProductsRepositoryInterface
@@ -20,11 +18,6 @@ class MysqlProductsRepository implements ProductsRepositoryInterface
     private PDO $pdo;
     private MysqlCategoriesRepository $categoriesRepository;
     private MysqlTagsRepository $tagsRepository;
-    private MysqlProducts_TagsRelationRepository $products_TagsRelationRepository;
-    private array $categories;
-    private TagsCollection $definedTags;
-    private Errors $errors;
-
 
     public function __construct()
     {
@@ -36,77 +29,62 @@ class MysqlProductsRepository implements ProductsRepositoryInterface
         } catch (\PDOException $e) {
             die($e->getMessage());
         }
-
-        $this->categoriesRepository = new MysqlCategoriesRepository($this->pdo);
-        $this->categories = $this->categoriesRepository->getAll();
-
-        $this->tagsRepository = new MysqlTagsRepository($this->pdo);
-        $this->products_TagsRelationRepository = new MysqlProducts_TagsRelationRepository($this->tagsRepository, $this->pdo);
-
-        $this->errors = new Errors();
+        $this->categoriesRepository = new MysqlCategoriesRepository();
+        $this->tagsRepository = new MysqlTagsRepository();
 
     }
 
-    public function getAll(?string $id = null, ?string $categoryId = null): ?ProductsCollection
+    public function filter(string $userId , ?string $categoryId = null,?TagsCollection $tagsCollection=null): ProductsCollection
     {
 
-        $filter = "WHERE user = '{$_SESSION['id']}' ";
-        if ($id !== null) {
-            $filter .= "AND id='{$id}' ";
-        } elseif ($categoryId !== null) {
-            if (!isset($this->categories[$categoryId])) {
-                $this->errors->add('categoryError','No such category');
-                throw new RepositoryValidationException();
+        $filterSql = "WHERE user = '{$userId}' ";
+        if(isset($categoryId)) $filterSql .= "AND categoryId ='{$categoryId}'";
+        if(isset($tagsCollection))
+        {
+            $filteredProductIds = $this->tagsRepository->getProductIdByTagsCollection($tagsCollection);
+            foreach ($filteredProductIds as $id)
+            {
+                $filterSql .= "AND id='{$id->id}'";
             }
-            $filter .= "AND categoryId ='{$categoryId}' ";
         }
-
-        $sql = "SELECT * FROM products " . $filter;
-
+        $sql = "SELECT * FROM products ".$filterSql;
         $statement = $this->pdo->prepare($sql);
         $statement->execute();
-
         $products = $statement->fetchAll(PDO::FETCH_CLASS);
 
 
-        $productsCollection = new ProductsCollection();
-
-        if (empty($products)) {
-            return null;
-        }
-
-        foreach ($products as $product) {
-            $productsCollection->add(new Product(
-                $product->name,
-                $product->categoryId,
-                $product->amount,
-                $product->user,
-                $this->products_TagsRelationRepository->getProductTagsCollection($product->id),
-                $product->lastEditedAt,
-                $product->addedAt,
-                $product->id,
-                $this->categoriesRepository->get($product->categoryId)
-            ));
-        }
-        return $productsCollection;
+        return $this->makeProductCollectionFromMySQLFetch_Class($products);
     }
 
-    public function save(Product $product): void
+    public function filterOneById(string $id, string $user): ?Product
+    {
+        $sql = "SELECT * FROM products WHERE id='{$id}' AND user = '{$user}'";
+        $statement = $this->pdo->prepare($sql);
+        $statement->execute();
+        $products = $statement->fetchAll(PDO::FETCH_CLASS);
+        $collection = $this->makeProductCollectionFromMySQLFetch_Class($products);
+        return $collection !== null ? $collection->getProducts()[0] : null;
+
+    }
+
+    public function getAll(?string $userId = null): ProductsCollection
     {
 
-        if (!isset($this->categories[$product->getCategoryId()])) {
-            $this->errors->add('categoryError','No such category');
-            throw new RepositoryValidationException();
-        }
+        $sql = "SELECT * FROM products WHERE user = '{$userId}'";
+        $products = $this->executeQueryFetchClass($sql);
+        return $this->makeProductCollectionFromMySQLFetch_Class($products);
+    }
 
+    public function save(Product $product, string $userId): void
+    {
 
-        if ($this->getAll($product->getId()) !== null) {
+        if ($this->filterOneById($product->getId(),$userId) !== null) {
             $sql = "UPDATE products 
         SET name = '{$product->getName()}' ,
             categoryId = '{$product->getCategoryId()}',
             amount = '{$product->getAmount()}' ,
           lastEditedAt = '{$product->getLastEditedAt()}'            
-        WHERE id='{$product->getId()}'";
+        WHERE id='{$product->getId()}' AND user = '{$userId}'";
         } else {
             $sql = "INSERT INTO products (name,categoryId,amount,addedAt,lastEditedAt,id,user) 
         VALUES  ('{$product->getName()}',
@@ -119,24 +97,58 @@ class MysqlProductsRepository implements ProductsRepositoryInterface
         }
 
         $this->pdo->exec($sql);
-        $this->products_TagsRelationRepository->save($product);
+        $this->tagsRepository->save($product);
     }
 
-    public function delete(Product $product): void
+    public function delete(Product $product, string $userId): void
     {
 
-        $sql = "DELETE FROM products WHERE id= '{$product->getId()}'";
+        $sql = "DELETE FROM products WHERE id= '{$product->getId()}' AND user= '{$userId}'";
 
         $this->pdo->exec($sql);
     }
 
-    public function getCategories(): array
+    public function getProductTagsCollection(string $productId): TagsCollection
     {
-        return $this->categories;
+        $sql = "SELECT tag_id FROM products_tags WHERE product_id ='$productId'";
+        $tags = $this->executeQueryFetchClass($sql);
+
+        $tagsCollection = new TagsCollection();
+        if (empty($tags)) return $tagsCollection;
+        foreach ($tags as $tag) {
+            $tagsCollection->add(new Tag($tag->tag_id, $this->tagsRepository->getNameById($tag->tag_id)));
+        }
+        return $tagsCollection;
     }
 
-    public function definedTagsCollection(): TagsCollection
+    public function makeProductCollectionFromMySQLFetch_Class(?array $products = null): ?ProductsCollection
     {
-        return $this->products_TagsRelationRepository->getAllTags();
+        $productsCollection = new ProductsCollection();
+
+        if ($products == null) {
+            return null;
+        }
+        foreach ($products as $product) {
+            $productsCollection->add(new Product(
+                $product->name,
+                $product->categoryId,
+                $product->amount,
+                $product->user,
+                $this->getProductTagsCollection($product->id),
+                $product->lastEditedAt,
+                $product->addedAt,
+                $product->id,
+                $this->categoriesRepository->getNameById($product->categoryId)
+            ));
+        }
+        return $productsCollection;
     }
+    public function executeQueryFetchClass(string $sql):array
+    {
+        $statement = $this->pdo->prepare($sql);
+        $statement->execute();
+
+        return $statement->fetchAll(PDO::FETCH_CLASS);
+    }
+
 }

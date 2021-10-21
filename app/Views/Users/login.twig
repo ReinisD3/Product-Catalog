@@ -6,6 +6,7 @@
 
 {% block content %}
     <div class="container">
+        {{ session.errors.login }}
 <form action="/users/login">
     <label for="email" class="form-label"><i class="fas fa-user"></i></label>
     <input type="text" class="form-control" name="email" id="email" placeholder="email">

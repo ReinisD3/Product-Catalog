@@ -20,4 +20,5 @@ class Errors
     {
         return $this->errors;
     }
+
 }

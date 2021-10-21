@@ -8,13 +8,13 @@
         <form method="post" action="/users/register">
             <label for="name" class="form-label"> Name : </label>
             <input type="text" class="form-control" name="name" id="name"/>
-            <p class="text-danger">{{ errors.get('registerName') }}</p>
+            <p class="text-danger">{{ session.errors.name }}</p>
             <label for="email" class="form-label"> E-mail : </label>
             <input type="text" class="form-control" name="email" id="email"/>
-            <p class="text-danger">{{ errors.get('registerEmail') }}</p>
+            <p class="text-danger">{{ session.errors.email }}</p>
             <label for="password" class="form-label"> Password : </label>
             <input type="password" class="form-control" name="password" id="password"/>
-            <p class="text-danger">{{ errors.get('registerPassword') }}</p>
+            <p class="text-danger">{{ session.errors.password }}</p>
             <input type="submit" value="Register" name="submit" class="btn btn-dark"/>
         </form>
     </div>

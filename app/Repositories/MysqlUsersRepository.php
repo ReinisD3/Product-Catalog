@@ -71,5 +71,20 @@ class MysqlUsersRepository implements UsersRepositoryInterface
             $userFound[0]->id
         );
     }
+    public function getByEmail(string $email):?User
+    {
+        $sql = "SELECT * FROM users WHERE email = '$email'";
+        $statement = $this->pdo->prepare($sql);
+        $statement->execute();
+        $userFound = $statement->fetchAll(PDO::FETCH_CLASS);
+        if (empty($userFound)) return null;
+        return new User(
+            $userFound[0]->name,
+            $userFound[0]->email,
+            $userFound[0]->password,
+            $userFound[0]->id
+        );
+
+    }
 
 }

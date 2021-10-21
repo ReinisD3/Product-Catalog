@@ -17,11 +17,11 @@
             <label for="title" class="form-label">Product name : </label>
             <input type="text" class="form-control" name="name" id="title"
                    placeholder="{{ product.getName }}"/>
-            <p class="text-danger">{{ errors.get('productName') }}</p>
+            <p class="text-danger">{{ session.errors.name }}</p>
             <label for="title" class="form-label">Product amount : </label>
             <input type="text" class="form-control" name="amount" id="title"
                    placeholder="{{ product.getAmount }}"/>
-            <p class="text-danger">{{ errors.get('productAmount') }}</p>
+            <p class="text-danger">{{ session.errors.amount }}</p>
             <fieldset>
                 <h6>Add Tags</h6>
                 <div>

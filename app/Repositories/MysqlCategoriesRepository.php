@@ -9,12 +9,19 @@ class MysqlCategoriesRepository
     private array $config;
     private PDO $pdo;
 
-    public function __construct(PDO $pdo)
+    public function __construct()
     {
-      $this->pdo = $pdo;
+        $this->config = json_decode(file_get_contents('config.json',), true);
+        try {
+            $this->pdo = new PDO($this->config['connection'] . ';dbname=' . $this->config['name'],
+                $this->config['username'],
+                $this->config['password']);
+        } catch (\PDOException $e) {
+            die($e->getMessage());
+        }
     }
 
-    public function get(int $categoryId): string
+    public function getNameById(int $categoryId): ?string
     {
         $sql = "select * from product_categories Where categoryid = '$categoryId'";
         $statement = $this->pdo->prepare($sql);
@@ -22,7 +29,7 @@ class MysqlCategoriesRepository
 
         $products = $statement->fetchAll(PDO::FETCH_CLASS);
 
-        return $products[0]->name;
+        return $products[0]->name ?? null;
     }
 
     public function getAll(): array
@@ -40,4 +47,5 @@ class MysqlCategoriesRepository
         return $categoriesKeyed;
 
     }
+
 }

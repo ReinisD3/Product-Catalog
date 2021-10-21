@@ -8,18 +8,15 @@ use App\Models\User;
 use App\Redirect;
 use App\Repositories\MysqlUsersRepository;
 use App\Repositories\UsersRepositoryInterface;
-use App\Validation\UsersValidation;
 use App\View;
 
 class UsersController
 {
     private UsersRepositoryInterface $repository;
-    private UsersValidation $validator;
 
     public function __construct()
     {
         $this->repository = new MysqlUsersRepository();
-        $this->validator = new UsersValidation();
     }
 
     public function index(): View
@@ -35,23 +32,13 @@ class UsersController
 
     }
 
-    public function login(): object
+    public function login(): Redirect
     {
 
-        $loggedUser = $this->repository->validateLogin(
-            trim($_GET['email']),
-            $_GET['password']
-        );
-        try {
-            $this->validator->validateLogin($loggedUser);
-            $_SESSION['id'] = $loggedUser->id();
-            return new Redirect('/products/show');
+        $loggedUser = $this->repository->validateLogin($_GET['email'], $_GET['password']);
 
-        } catch (RepositoryValidationException $e) {
-
-            echo "<script type='text/javascript'>alert('User not found! Try Again or make new User account.');</script>";
-            return  new View('Users/login.twig',['errors'=>$_SESSION['errors']]);
-        }
+        $_SESSION['id'] = $loggedUser->id();
+        return new Redirect('/products/show');
 
     }
 
@@ -61,22 +48,15 @@ class UsersController
         return new View('Users\register.twig');
     }
 
-    public function registerSave(): View
+    public function registerSave(): Redirect
     {
-        try {
-            $this->validator->validateRegister($_POST);
             $this->repository->add(new User(
                 $_POST['name'],
                 $_POST['email'],
                 $_POST['password']
             ));
-            echo "<script type='text/javascript'>alert('User registered');</script>";
-            return new Redirect('/users/index');
-        } catch (FormValidationException $e) {
 
-            $_SESSION['errors'] = $this->validator->getErrors();
-            return new View('Users\register.twig',['errors'=>$_SESSION['errors']]);
-        }
+            return new Redirect('/users/index');
 
     }
 

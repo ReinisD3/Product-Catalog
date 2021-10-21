@@ -16,7 +16,6 @@ class TagsCollection
             }
         }
     }
-
     public function add(Tag $tag): void
     {
         $this->tags[$tag->getTagId()] = $tag;
@@ -37,5 +36,6 @@ class TagsCollection
     {
         return $this->tags[$id] ?? null;
     }
+
 
 }
