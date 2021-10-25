@@ -5,9 +5,9 @@ namespace App\Models;
 class Tag
 {
     private string $tag_id;
-    private string $name;
+    private ?string $name;
 
-    public function __construct(string $tag_id, string $name)
+    public function __construct(string $tag_id, ?string $name = null)
     {
 
         $this->tag_id = $tag_id;
@@ -19,9 +19,9 @@ class Tag
         return $this->tag_id;
     }
 
-    public function getName(): string
+    public function getName(): ?string
     {
-        return $this->name;
+        return $this->name ?? null;
     }
 
 }

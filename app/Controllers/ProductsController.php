@@ -2,82 +2,85 @@
 
 namespace App\Controllers;
 
-use App\Auth;
-use App\Models\Collections\TagsCollection;
-use App\Models\Product;
 use App\Redirect;
-use App\Repositories\CategoriesRepositoryInterface;
-use App\Repositories\MysqlCategoriesRepository;
-use App\Repositories\MysqlProductsRepository;
-use App\Repositories\MysqlTagsRepository;
-use App\Repositories\ProductsRepositoryInterface;
-use App\Repositories\TagsRepositoryInterface;
+use App\Services\Products\AddServiceRequest;
+use App\Services\Products\AddService;
+use App\Services\Products\AddTemplateService;
+use App\Services\Products\DeleteServiceRequest;
+use App\Services\Products\DeleteService;
+use App\Services\Products\EditServiceRequest;
+use App\Services\Products\EditService;
+use App\Services\Products\EditTemplateService;
+use App\Services\Products\EditTemplateServiceRequest;
+use App\Services\Products\FilterServiceRequest;
+use App\Services\Products\FilterService;
+use App\Services\Products\FilterTemplateService;
+use App\Services\Products\ShowServiceRequest;
+use App\Services\Products\ShowService;
 use Twig\Environment;
 
 
 class ProductsController
 {
-    private ProductsRepositoryInterface $repository;
-    private CategoriesRepositoryInterface $categoriesRepository;
-    private TagsRepositoryInterface $tagsRepository;
     private Environment $twig;
-    private TagsCollection $definedTags;
-    private array $categories;
+    private ShowService $showService;
+    private AddService $addService;
+    private EditService $editService;
+    private FilterService $filterService;
+    private DeleteService $deleteService;
+    private AddTemplateService $addTemplateService;
+    private EditTemplateService $editTemplateService;
+    private FilterTemplateService $filterTemplateService;
 
 
-    public function __construct(MysqlProductsRepository $repository,
-                                MysqlCategoriesRepository $categoriesRepository,
-                                MysqlTagsRepository $tagsRepository,
-                                Environment $twig)
+    public function __construct(Environment           $twig,
+                                ShowService           $showService,
+                                AddService            $addService,
+                                EditService           $editService,
+                                FilterService         $filterService,
+                                DeleteService         $deleteService,
+                                AddTemplateService    $addTemplateService,
+                                EditTemplateService   $editTemplateService,
+                                FilterTemplateService $filterTemplateService)
     {
-        $this->repository = $repository;
-        $this->tagsRepository = $tagsRepository;
-        $this->categoriesRepository = $categoriesRepository;
+
         $this->twig = $twig;
-        $this->definedTags = $this->tagsRepository->getAll();
-        $this->categories = $this->categoriesRepository->getAll();
-
-
+        $this->showService = $showService;
+        $this->addService = $addService;
+        $this->editService = $editService;
+        $this->filterService = $filterService;
+        $this->deleteService = $deleteService;
+        $this->addTemplateService = $addTemplateService;
+        $this->editTemplateService = $editTemplateService;
+        $this->filterTemplateService = $filterTemplateService;
     }
 
     public function index(): void
     {
-        echo  $this->twig->render('Products/index.twig');
+        echo $this->twig->render('Products/index.twig');
     }
 
     public function show(): void
     {
-        $productCollection = $this->repository->getAll($_SESSION['id']);
-        echo  $this->twig->render('Products/show.twig',['productCollection' => $productCollection,
-            'categories' => $this->categories,
-            'tags' => $this->definedTags,
-            'userName' => Auth::user($_SESSION['id'])]);
+        $showServiceRequest = new ShowServiceRequest($_SESSION['id']);
+        $serviceResponse = $this->showService->execute($showServiceRequest);
+
+        echo $this->twig->render('Products/show.twig', $serviceResponse->getAll());
     }
 
     public function addTemplate(): void
     {
+        $serviceResponse = $this->addTemplateService->execute();
 
-        echo  $this->twig->render('Products/add.twig',
-            ['categories' => $this->categories,
-                'userName' => Auth::user($_SESSION['id']),
-                'tags' => $this->definedTags,
-                'errors' => $_SESSION['errors']]);
+        echo $this->twig->render('Products/add.twig',
+            $serviceResponse->getAll());
     }
 
     public function add(): void
     {
+        $addServiceRequest = new AddServiceRequest($_POST, $_SESSION['id']);
 
-        $tags = array_map(fn($t) => $this->definedTags->getTagById($t), $_POST['tags']);
-        $tagsCollection = new TagsCollection($tags);
-
-        $product = new Product(
-            $_POST['name'],
-            $_POST['categoryId'],
-            $_POST['amount'],
-            $_SESSION['id'] ?? null,
-            $tagsCollection
-        );
-        $this->repository->save($product,$_SESSION['id']);
+        $this->addService->execute($addServiceRequest);
 
         Redirect::url('/products/show');
 
@@ -86,32 +89,18 @@ class ProductsController
 
     public function editTemplate(array $productId): void
     {
-        $editProduct = $this->repository->filterOneById($productId['id'],$_SESSION['id']);
+        $editTemplateServiceRequest = new EditTemplateServiceRequest($productId['id'], $_SESSION['id']);
+        $serviceResponse = $this->editTemplateService->execute($editTemplateServiceRequest);
 
-        echo  $this->twig->render('Products/edit.twig',
-            ['product' => $editProduct,
-                'categories' => $this->categories,
-                'tags' => $this->definedTags,
-                'errors' => $_SESSION['errors'],
-                'userName' => Auth::user($_SESSION['id'])]);
+        echo $this->twig->render('Products/edit.twig',
+            $serviceResponse->getAll());
     }
 
 
     public function edit(array $productId): void
     {
-
-        /** @var Product $product */
-
-        $product = $this->repository->filterOneById($productId['id'],$_SESSION['id']);
-        $tags = array_map(fn($t) => $this->definedTags->getTagById($t), $_POST['tags']);
-        $tagsCollection = new TagsCollection($tags);
-
-        if ($_POST['name'] !== '') $product->setName($_POST['name']);
-        $product->setCategoryId((int)$_POST['categoryId']);
-        if ($_POST['amount'] !== '') $product->setAmount((int)$_POST['amount']);
-        $product->setLastEditedAt();
-        $product->setTagsCollection($tagsCollection);
-        $this->repository->save($product,$_SESSION['id']);
+        $editServiceRequest = new EditServiceRequest($_POST, $productId, $_SESSION['id']);
+        $this->editService->execute($editServiceRequest);
 
         Redirect::url('/products/show');
 
@@ -119,33 +108,26 @@ class ProductsController
 
     public function filterTemplate(): void
     {
-        echo  $this->twig->render('Products/filter.twig',
-            ['categories' => $this->categories,
-                'tags' => $this->definedTags,
-                'userName' => Auth::user($_SESSION['id'])]);
+        $serviceResponse = $this->filterTemplateService->execute();
+        echo $this->twig->render('Products/filter.twig',
+            $serviceResponse->getAll());
     }
 
     public function filter(): void
     {
+        $filterServiceRequest = new FilterServiceRequest($_GET, $_SESSION['id']);
 
-        if ($_GET['categoryId'] == 'all') $_GET['categoryId'] = null;
-        $tags = array_map(fn($t) => $this->definedTags->getTagById($t), $_GET['tags']);
-        $tagsCollection = new TagsCollection($tags);
-        $filteredProductsCollection = $this->repository->filter($_SESSION['id'],$_GET['categoryId'],$tagsCollection);
+        $serviceResponse = $this->filterService->execute($filterServiceRequest);
 
-
-        echo  $this->twig->render('Products/show.twig',
-            ['productCollection' => $filteredProductsCollection,
-                'categories' => $this->categories,
-                'tags' => $this->definedTags,
-                'userName' => Auth::user($_SESSION['id'])]);
+        echo $this->twig->render('Products/show.twig',
+            $serviceResponse->getAll());
 
     }
 
     public function delete(array $id): void
     {
-        $product = $this->repository->filterOneById($id['id'],$_SESSION['id']);
-        $this->repository->delete($product, $_SESSION['id']);
+        $deleteServiceRequest = new DeleteServiceRequest($id['id'], $_SESSION['id']);
+        $this->deleteService->execute($deleteServiceRequest);
         Redirect::url('/products/show');
     }
 

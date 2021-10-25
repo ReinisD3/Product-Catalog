@@ -41,8 +41,7 @@ class MysqlCategoriesRepository implements CategoriesRepositoryInterface
 
         $categories = $statement->fetchAll(PDO::FETCH_CLASS);
         $categoriesKeyed = [];
-        foreach ($categories as $category)
-        {
+        foreach ($categories as $category) {
             $categoriesKeyed[$category->categoryId] = $category;
         }
         return $categoriesKeyed;

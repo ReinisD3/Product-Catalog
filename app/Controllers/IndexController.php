@@ -18,6 +18,6 @@ class IndexController
 
     public function index(): void
     {
-        echo $this->twig->render('index.twig',['userName' => Auth::user($_SESSION['id'])]);
+        echo $this->twig->render('index.twig', ['userName' => Auth::user($_SESSION['id'])]);
     }
 }

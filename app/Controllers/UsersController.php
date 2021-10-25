@@ -2,22 +2,26 @@
 
 namespace App\Controllers;
 
-
-use App\Models\User;
 use App\Redirect;
-use App\Repositories\MysqlUsersRepository;
-use App\Repositories\UsersRepositoryInterface;
+use App\Services\Users\LoginService;
+use App\Services\Users\LoginServiceRequest;
+use App\Services\Users\RegisterSaveService;
+use App\Services\Users\RegisterSaveServiceRequest;
 use Twig\Environment;
 
 class UsersController
 {
-    private UsersRepositoryInterface $repository;
     private Environment $twig;
+    private LoginService $loginService;
+    private RegisterSaveService $registerSaveService;
 
-    public function __construct(MysqlUsersRepository $repository, Environment $twig)
+    public function __construct(Environment         $twig,
+                                LoginService        $loginService,
+                                RegisterSaveService $registerSaveService)
     {
-        $this->repository = $repository;
         $this->twig = $twig;
+        $this->loginService = $loginService;
+        $this->registerSaveService = $registerSaveService;
     }
 
     public function index(): void
@@ -29,17 +33,16 @@ class UsersController
     public function logout(): void
     {
         unset($_SESSION['id']);
-        echo "Es te";
+
         Redirect::url('/');
 
     }
 
     public function login(): void
     {
+        $loginServiceRequest = new LoginServiceRequest($_GET, $_SESSION['id']);
+        $this->loginService->execute($loginServiceRequest);
 
-        $loggedUser = $this->repository->validateLogin($_GET['email'], $_GET['password']);
-
-        $_SESSION['id'] = $loggedUser->id();
         Redirect::url('/products/show');
 
     }
@@ -52,13 +55,10 @@ class UsersController
 
     public function registerSave(): void
     {
-            $this->repository->add(new User(
-                $_POST['name'],
-                $_POST['email'],
-                $_POST['password']
-            ));
+        $request = new RegisterSaveServiceRequest($_POST);
+        $this->registerSaveService->execute($request);
 
-            Redirect::url('/users/index');
+        Redirect::url('/users/index');
 
     }
 

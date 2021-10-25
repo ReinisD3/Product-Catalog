@@ -14,3 +14,4 @@ $router = new Router($container);
 $router->start();
 
 unset($_SESSION['errors']);
+unset($_SESSION['data']);

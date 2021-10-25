@@ -21,6 +21,8 @@ class LoginValidation extends BaseValidation implements MiddlewareInterface
 
         } catch (FormValidationException $e) {
             $_SESSION['errors'] = $this->getErrors();
+
+
             Redirect::url('/users/index');
         }
 

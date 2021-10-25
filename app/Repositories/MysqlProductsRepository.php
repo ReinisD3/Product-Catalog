@@ -6,6 +6,7 @@ use App\Models\Collections\ProductsCollection;
 use App\Models\Collections\TagsCollection;
 use App\Models\Product;
 use App\Models\Tag;
+use App\Services\Products\FilterServiceRequest;
 use PDO;
 
 
@@ -32,14 +33,15 @@ class MysqlProductsRepository implements ProductsRepositoryInterface
 
     }
 
-    public function filter(string $userId , ?string $categoryId = null,?TagsCollection $tagsCollection=null): ?ProductsCollection
+    public function filter(FilterServiceRequest $filterRequest): ?ProductsCollection
     {
-        $sql = "SELECT * FROM products WHERE user= '$userId' ";
 
-        if(isset($categoryId)) $sql .= "AND categoryId ='{$categoryId}'";
-        if(count($tagsCollection->getTags()) > 0)
+        $sql = "SELECT * FROM products WHERE user= '{$filterRequest->getUserId()}' ";
+
+        if(isset($categoryId)) $sql .= "AND categoryId ='{$filterRequest->getCategoryId()}'";
+        $tags = $filterRequest->getTagsCollection()->getTags();
+        if(count($tags) > 0)
         {
-            $tags = $tagsCollection->getTags();
             $tagsCount = count($tags);
             $tagsIn ="(".implode(',',array_map(fn($tag)=>$tag->getId(),$tags)).")";
             $sql .= "AND id IN (SELECT product_id 
