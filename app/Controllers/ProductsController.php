@@ -1,64 +1,70 @@
 <?php
 
-namespace app\Controllers;
+namespace App\Controllers;
 
 use App\Auth;
-use App\Models\Collections\ProductsCollection;
 use App\Models\Collections\TagsCollection;
 use App\Models\Product;
 use App\Redirect;
+use App\Repositories\CategoriesRepositoryInterface;
 use App\Repositories\MysqlCategoriesRepository;
 use App\Repositories\MysqlProductsRepository;
 use App\Repositories\MysqlTagsRepository;
 use App\Repositories\ProductsRepositoryInterface;
-use App\View;
+use App\Repositories\TagsRepositoryInterface;
+use Twig\Environment;
 
 
 class ProductsController
 {
     private ProductsRepositoryInterface $repository;
-    private MysqlTagsRepository $tagsRepository;
-    private MysqlCategoriesRepository $categoriesRepository;
+    private CategoriesRepositoryInterface $categoriesRepository;
+    private TagsRepositoryInterface $tagsRepository;
+    private Environment $twig;
     private TagsCollection $definedTags;
     private array $categories;
 
-    public function __construct()
+
+    public function __construct(MysqlProductsRepository $repository,
+                                MysqlCategoriesRepository $categoriesRepository,
+                                MysqlTagsRepository $tagsRepository,
+                                Environment $twig)
     {
-        $this->repository = new MysqlProductsRepository();
-        $this->tagsRepository = new MysqlTagsRepository();
-        $this->categoriesRepository = new MysqlCategoriesRepository();
+        $this->repository = $repository;
+        $this->tagsRepository = $tagsRepository;
+        $this->categoriesRepository = $categoriesRepository;
+        $this->twig = $twig;
         $this->definedTags = $this->tagsRepository->getAll();
         $this->categories = $this->categoriesRepository->getAll();
 
+
     }
 
-    public function index(): View
+    public function index(): void
     {
-        return new View('Products/index.twig');
+        echo  $this->twig->render('Products/index.twig');
     }
 
-    public function show(): View
+    public function show(): void
     {
         $productCollection = $this->repository->getAll($_SESSION['id']);
-
-        return new View('Products/show.twig',
-            ['productCollection' => $productCollection,
-                'categories' => $this->categories,
-                'tags' => $this->definedTags,
-                'userName' => Auth::user($_SESSION['id'])]);
+        echo  $this->twig->render('Products/show.twig',['productCollection' => $productCollection,
+            'categories' => $this->categories,
+            'tags' => $this->definedTags,
+            'userName' => Auth::user($_SESSION['id'])]);
     }
 
-    public function addTemplate(): View
+    public function addTemplate(): void
     {
 
-        return new View('Products/add.twig',
+        echo  $this->twig->render('Products/add.twig',
             ['categories' => $this->categories,
                 'userName' => Auth::user($_SESSION['id']),
                 'tags' => $this->definedTags,
                 'errors' => $_SESSION['errors']]);
     }
 
-    public function add(): object
+    public function add(): void
     {
 
         $tags = array_map(fn($t) => $this->definedTags->getTagById($t), $_POST['tags']);
@@ -73,24 +79,25 @@ class ProductsController
         );
         $this->repository->save($product,$_SESSION['id']);
 
-        return new Redirect('/products/show');
+        Redirect::url('/products/show');
 
 
     }
 
-    public function editTemplate(array $productId): View
+    public function editTemplate(array $productId): void
     {
         $editProduct = $this->repository->filterOneById($productId['id'],$_SESSION['id']);
 
-        return new View('Products/edit.twig',
+        echo  $this->twig->render('Products/edit.twig',
             ['product' => $editProduct,
                 'categories' => $this->categories,
                 'tags' => $this->definedTags,
-                'errors' => $_SESSION['errors']]);
+                'errors' => $_SESSION['errors'],
+                'userName' => Auth::user($_SESSION['id'])]);
     }
 
 
-    public function edit(array $productId): Redirect
+    public function edit(array $productId): void
     {
 
         /** @var Product $product */
@@ -106,27 +113,28 @@ class ProductsController
         $product->setTagsCollection($tagsCollection);
         $this->repository->save($product,$_SESSION['id']);
 
-        return new Redirect('/products/show');
+        Redirect::url('/products/show');
 
     }
 
-    public function filterTemplate(): View
+    public function filterTemplate(): void
     {
-        return new View('Products/filter.twig',
+        echo  $this->twig->render('Products/filter.twig',
             ['categories' => $this->categories,
-                'tags' => $this->definedTags,]);
+                'tags' => $this->definedTags,
+                'userName' => Auth::user($_SESSION['id'])]);
     }
 
-    public function filter(): View
+    public function filter(): void
     {
 
         if ($_GET['categoryId'] == 'all') $_GET['categoryId'] = null;
         $tags = array_map(fn($t) => $this->definedTags->getTagById($t), $_GET['tags']);
         $tagsCollection = new TagsCollection($tags);
-        $filteredProductsCollection = $this->repository->filter($_SESSION['id'],$_GET['categoryId'],);
+        $filteredProductsCollection = $this->repository->filter($_SESSION['id'],$_GET['categoryId'],$tagsCollection);
 
 
-        return new View('Products/show.twig',
+        echo  $this->twig->render('Products/show.twig',
             ['productCollection' => $filteredProductsCollection,
                 'categories' => $this->categories,
                 'tags' => $this->definedTags,
@@ -134,11 +142,11 @@ class ProductsController
 
     }
 
-    public function delete(array $id): Redirect
+    public function delete(array $id): void
     {
         $product = $this->repository->filterOneById($id['id'],$_SESSION['id']);
         $this->repository->delete($product, $_SESSION['id']);
-        return new Redirect('/products/show');
+        Redirect::url('/products/show');
     }
 
 }

@@ -11,6 +11,7 @@
     "nesbot/carbon": "^2.53",
     "respect/validation": "^2.2",
     "twig/twig": "^3.0",
-    "ramsey/uuid": "^4.2"
+    "ramsey/uuid": "^4.2",
+    "php-di/php-di": "^6.3"
   }
 }

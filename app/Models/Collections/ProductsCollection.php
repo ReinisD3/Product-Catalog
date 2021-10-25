@@ -1,6 +1,6 @@
 <?php
 
-namespace app\Models\Collections;
+namespace App\Models\Collections;
 
 use App\Models\Product;
 use App\Models\Collections\TagsCollection;

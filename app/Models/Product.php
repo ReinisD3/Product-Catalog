@@ -1,6 +1,6 @@
 <?php
 
-namespace app\Models;
+namespace App\Models;
 
 use app\Models\Collections\TagsCollection;
 use Carbon\Carbon;

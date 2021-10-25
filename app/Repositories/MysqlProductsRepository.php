@@ -1,15 +1,13 @@
 <?php
 
-namespace app\Repositories;
+namespace App\Repositories;
 
 use App\Models\Collections\ProductsCollection;
 use App\Models\Collections\TagsCollection;
 use App\Models\Product;
 use App\Models\Tag;
 use PDO;
-use App\Repositories\ProductsRepositoryInterface;
-use App\Repositories\MysqlCategoriesRepository;
-use App\Repositories\MysqlTagsRepository;
+
 
 
 class MysqlProductsRepository implements ProductsRepositoryInterface
@@ -34,26 +32,28 @@ class MysqlProductsRepository implements ProductsRepositoryInterface
 
     }
 
-    public function filter(string $userId , ?string $categoryId = null,?TagsCollection $tagsCollection=null): ProductsCollection
+    public function filter(string $userId , ?string $categoryId = null,?TagsCollection $tagsCollection=null): ?ProductsCollection
     {
+        $sql = "SELECT * FROM products WHERE user= '$userId' ";
 
-        $filterSql = "WHERE user = '{$userId}' ";
-        if(isset($categoryId)) $filterSql .= "AND categoryId ='{$categoryId}'";
-        if(isset($tagsCollection))
+        if(isset($categoryId)) $sql .= "AND categoryId ='{$categoryId}'";
+        if(count($tagsCollection->getTags()) > 0)
         {
-            $filteredProductIds = $this->tagsRepository->getProductIdByTagsCollection($tagsCollection);
-            foreach ($filteredProductIds as $id)
-            {
-                $filterSql .= "AND id='{$id->id}'";
-            }
+            $tags = $tagsCollection->getTags();
+            $tagsCount = count($tags);
+            $tagsIn ="(".implode(',',array_map(fn($tag)=>$tag->getId(),$tags)).")";
+            $sql .= "AND id IN (SELECT product_id 
+            FROM products_tags  
+            WHERE  tag_id IN $tagsIn 
+            GROUP BY product_id 
+            HAVING COUNT(tag_id) >= {$tagsCount})";
         }
-        $sql = "SELECT * FROM products ".$filterSql;
         $statement = $this->pdo->prepare($sql);
         $statement->execute();
         $products = $statement->fetchAll(PDO::FETCH_CLASS);
 
 
-        return $this->makeProductCollectionFromMySQLFetch_Class($products);
+        return $this->makeProductCollectionFromMySQLFetch_Class($products)??null;
     }
 
     public function filterOneById(string $id, string $user): ?Product
@@ -67,7 +67,7 @@ class MysqlProductsRepository implements ProductsRepositoryInterface
 
     }
 
-    public function getAll(?string $userId = null): ProductsCollection
+    public function getAll(?string $userId = null): ?ProductsCollection
     {
 
         $sql = "SELECT * FROM products WHERE user = '{$userId}'";

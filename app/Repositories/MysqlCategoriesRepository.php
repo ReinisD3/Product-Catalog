@@ -1,10 +1,11 @@
 <?php
 
-namespace app\Repositories;
+namespace App\Repositories;
 
 use PDO;
 
-class MysqlCategoriesRepository
+
+class MysqlCategoriesRepository implements CategoriesRepositoryInterface
 {
     private array $config;
     private PDO $pdo;

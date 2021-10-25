@@ -17,8 +17,8 @@
             <fieldset>
                 <h6>Filter by Tags</h6>
                 {% for tag in tags.getTags %}
-                    <input type="checkbox" id="{{ tag.getTagId }}" name="tags[{{ tag.getTagId }}]" value="{{ tag.getTagId }}">
-                    <label for="{{ tag.getTagId }}">{{ tag.getName }}</label>
+                    <input type="checkbox" id="{{ tag.getId }}" name="tags[{{ tag.getId }}]" value="{{ tag.getId }}">
+                    <label for="{{ tag.getId }}">{{ tag.getName }}</label>
                 {% endfor %}
             </fieldset>
             <input type="submit" value="Filter" name="submit" class="btn btn-dark"/>

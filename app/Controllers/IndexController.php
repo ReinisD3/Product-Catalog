@@ -1,13 +1,23 @@
 <?php
 
-namespace app\Controllers;
+namespace App\Controllers;
 
-use App\View;
+
+use App\Auth;
+use Twig\Environment;
 
 class IndexController
 {
-    public function index(): View
+
+    private Environment $twig;
+
+    public function __construct(Environment $twig)
     {
-        return new View('index.twig');
+        $this->twig = $twig;
+    }
+
+    public function index(): void
+    {
+        echo $this->twig->render('index.twig',['userName' => Auth::user($_SESSION['id'])]);
     }
 }

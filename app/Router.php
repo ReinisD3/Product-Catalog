@@ -1,6 +1,6 @@
 <?php
 
-namespace app;
+namespace App;
 
 use App\Middleware\CheckIfAuthorised;
 use App\Validation\Products\AddFormValidation;
@@ -8,38 +8,28 @@ use App\Validation\Products\EditFormValidation;
 use App\Validation\Users\LoginValidation;
 use App\Validation\Users\RegisterFormValidation;
 use FastRoute;
-use App\View;
-use App\Redirect;
-use Twig\Environment;
-use Twig\Error\LoaderError;
-use Twig\Error\RuntimeError;
-use Twig\Error\SyntaxError;
-use Twig\Loader\FilesystemLoader;
-
+use Psr\Container\ContainerInterface;
 
 class Router
 {
     private FastRoute\Dispatcher $dispatcher;
-    private Environment $twig;
     private array $middlewares;
+    private ContainerInterface $container;
 
-    public function __construct()
+    public function __construct(ContainerInterface $container)
     {
+
+        $this->container = $container;
         $this->middlewares = [
             'ProductsController@delete' => [CheckIfAuthorised::class],
             'ProductsController@show' => [CheckIfAuthorised::class],
             'ProductsController@index' => [CheckIfAuthorised::class],
+            'ProductsController@filter' => [CheckIfAuthorised::class],
             'ProductsController@edit' => [CheckIfAuthorised::class,EditFormValidation::class],
             'ProductsController@add' => [CheckIfAuthorised::class,AddFormValidation::class],
             'UsersController@login' => [LoginValidation::class],
             'UsersController@registerSave' => [RegisterFormValidation::class]
-
         ];
-
-        $loader = new FilesystemLoader('app/Views');
-        $this->twig = new Environment($loader);
-        $this->twig->addGlobal('session', $_SESSION);
-
 
         $this->dispatcher = FastRoute\simpleDispatcher(function (FastRoute\RouteCollector $r) {
             $r->addRoute('GET', '/', 'IndexController@index');
@@ -59,16 +49,9 @@ class Router
             $r->addRoute('GET', '/users/logout', 'UsersController@logout');
             $r->addRoute('GET', '/users/register', 'UsersController@register');
             $r->addRoute('POST', '/users/register', 'UsersController@registerSave');
-
-
         });
     }
 
-    /**
-     * @throws RuntimeError
-     * @throws SyntaxError
-     * @throws LoaderError
-     */
     public function start(): void
     {
         $httpMethod = $_SERVER['REQUEST_METHOD'];
@@ -93,27 +76,17 @@ class Router
                 foreach ($this->middlewares as $key => $middleware) {
                     if ($key == $handler)
                         foreach($middleware as $process ) {
-                            (new $process())->handle($vars);
+                            ($this->container->get($process))->handle($vars);
                         }
                 }
 
                 [$handler, $method] = explode('@', $handler);
 
 
-                $controller = 'App\Controllers\\' . $handler;
-                $controller = new $controller();
-                $process = $controller->$method($vars);
+                $controller = 'App\Controllers\\' . $handler;//
+                $controller = $this->container->get($controller);
+                $controller->$method($vars);
 
-                if ($process instanceof View) {
-                    echo $this->twig->render($process->getFileName(),
-                        $process->getData()
-                    );
-                }
-                if ($process instanceof Redirect) {
-                    header("Location:{$process->getLocation()}");
-                    exit;
-                }
-                break;
         }
     }
 

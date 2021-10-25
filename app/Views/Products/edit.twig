@@ -26,10 +26,10 @@
                 <h6>Add Tags</h6>
                 <div>
                     {% for tag in tags.getTags %}
-                        <input type="checkbox" id="{{ tag.getTagId }}" name="tags[{{ tag.getTagId }}]"
-                               value="{{ tag.getTagId }}"
-                               {% if product.getTagsCollection.getTagById(tag.getTagId) is not null %}checked{% endif %}>
-                        <label for="{{ tag.getTagId }}">{{ tag.getName }}</label>
+                        <input type="checkbox" id="{{ tag.getId }}" name="tags[{{ tag.getId }}]"
+                               value="{{ tag.getId }}"
+                               {% if product.getTagsCollection.getTagById(tag.getId) is not null %}checked{% endif %}>
+                        <label for="{{ tag.getId }}">{{ tag.getName }}</label>
                     {% endfor %}
                 </div>
             </fieldset>

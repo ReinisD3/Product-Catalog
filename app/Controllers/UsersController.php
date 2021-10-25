@@ -1,54 +1,56 @@
 <?php
 
-namespace app\Controllers;
+namespace App\Controllers;
 
-use App\Exceptions\FormValidationException;
-use App\Exceptions\RepositoryValidationException;
+
 use App\Models\User;
 use App\Redirect;
 use App\Repositories\MysqlUsersRepository;
 use App\Repositories\UsersRepositoryInterface;
-use App\View;
+use Twig\Environment;
 
 class UsersController
 {
     private UsersRepositoryInterface $repository;
+    private Environment $twig;
 
-    public function __construct()
+    public function __construct(MysqlUsersRepository $repository, Environment $twig)
     {
-        $this->repository = new MysqlUsersRepository();
+        $this->repository = $repository;
+        $this->twig = $twig;
     }
 
-    public function index(): View
+    public function index(): void
     {
-        return new View('Users/login.twig');
+        echo $this->twig->render('Users/login.twig');
 
     }
 
-    public function logout(): Redirect
+    public function logout(): void
     {
         unset($_SESSION['id']);
-        return new Redirect('/');
+        echo "Es te";
+        Redirect::url('/');
 
     }
 
-    public function login(): Redirect
+    public function login(): void
     {
 
         $loggedUser = $this->repository->validateLogin($_GET['email'], $_GET['password']);
 
         $_SESSION['id'] = $loggedUser->id();
-        return new Redirect('/products/show');
+        Redirect::url('/products/show');
 
     }
 
 
-    public function register(): View
+    public function register(): void
     {
-        return new View('Users\register.twig');
+        echo $this->twig->render('Users\register.twig');
     }
 
-    public function registerSave(): Redirect
+    public function registerSave(): void
     {
             $this->repository->add(new User(
                 $_POST['name'],
@@ -56,7 +58,7 @@ class UsersController
                 $_POST['password']
             ));
 
-            return new Redirect('/users/index');
+            Redirect::url('/users/index');
 
     }
 

@@ -1,14 +1,13 @@
 <?php
 
-namespace app\Repositories;
+namespace App\Repositories;
 
 use App\Models\Collections\TagsCollection;
 use App\Models\Product;
 use App\Models\Tag;
 use PDO;
 
-
-class MysqlTagsRepository
+class MysqlTagsRepository implements TagsRepositoryInterface
 {
     private array $config;
     private PDO $pdo;
@@ -53,7 +52,7 @@ class MysqlTagsRepository
         foreach ($product->getTagsCollection()->getTags() as $tag) {
             $sql = "INSERT INTO products_tags (product_id,tag_id) 
         VALUES  ('{$product->getId()}',
-                 '{$tag->getTagId()}')";
+                 '{$tag->getId()}')";
             $this->pdo->exec($sql);
         }
     }
@@ -67,24 +66,7 @@ class MysqlTagsRepository
         return $tagName[0]->name ?? null;
     }
 
-    public function getProductIdByTagsCollection(TagsCollection $tagsCollection): array
-    {
-        $sql = "SELECT id 
-                FROM products_tags 
-                RIGHT JOIN products 
-                ON products_tags.product_id = products.id
-                WHERE ";
 
-        /** @var Tag $tag */
-        $i = 1;
-        foreach ($tagsCollection->getTags() as $tag) {
-            $i == count($tagsCollection->getTags()) ? $sql .= "tag_id= '{$tag->getTagId()}'" : $sql .= "tag_id='{$tag->getTagId()}' AND ";
-            $i++;
-        }
-        $statement = $this->pdo->prepare($sql);
-        $statement->execute();
-        return $statement->fetchAll(PDO::FETCH_CLASS);
-    }
     public function tagsIsDefined(array $tags):bool
     {
         foreach ($tags as $tag)

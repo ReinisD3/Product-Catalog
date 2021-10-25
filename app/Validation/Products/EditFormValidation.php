@@ -1,11 +1,9 @@
 <?php
 
-namespace app\Validation\Products;
+namespace App\Validation\Products;
 
 use App\Exceptions\FormValidationException;
 use App\Middleware\MiddlewareInterface;
-use App\Repositories\MysqlCategoriesRepository;
-use App\Repositories\MysqlTagsRepository;
 use App\Validation\BaseValidation;
 use App\Redirect;
 
@@ -14,8 +12,6 @@ class EditFormValidation extends BaseValidation implements MiddlewareInterface
 
     public function handle(?array $data = null): void
     {
-        $categoriesRepository = new MysqlCategoriesRepository();
-        $tagsRepository = new MysqlTagsRepository();
 
         try {
             if ($_POST['name'] == '') {
@@ -24,9 +20,9 @@ class EditFormValidation extends BaseValidation implements MiddlewareInterface
             if (!is_numeric($_POST['amount'])) {
                 $this->errors->add('amount', 'Needs to be numeric value');
             }
-            if ($categoriesRepository->getNameById($_POST['categoryId']) == null)
+            if ($this->categoriesRepository->getNameById($_POST['categoryId']) == null)
                 $this->errors->add('categoryId', 'Wrong category input');
-            if (isset($_POST['tags']) && !$tagsRepository->tagsIsDefined($_POST['tags']))
+            if (isset($_POST['tags']) && !$this->tagsRepository->tagsIsDefined($_POST['tags']))
                 $this->errors->add('tags', 'Wrong Tags input');
             $this->checkErrors();
         } catch (FormValidationException $e) {

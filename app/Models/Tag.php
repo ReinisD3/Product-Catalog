@@ -1,6 +1,6 @@
 <?php
 
-namespace app\Models;
+namespace App\Models;
 
 class Tag
 {
@@ -14,7 +14,7 @@ class Tag
         $this->name = $name;
     }
 
-    public function getTagId(): string
+    public function getId(): string
     {
         return $this->tag_id;
     }

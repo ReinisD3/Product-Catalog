@@ -1,6 +1,6 @@
 <?php
 
-namespace app\Models\Collections;
+namespace App\Models\Collections;
 
 use App\Models\Tag;
 
@@ -18,7 +18,7 @@ class TagsCollection
     }
     public function add(Tag $tag): void
     {
-        $this->tags[$tag->getTagId()] = $tag;
+        $this->tags[$tag->getId()] = $tag;
     }
 
     public function getTags(): array
